@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Media;
 using System.Windows;
 
@@ -63,6 +62,15 @@ namespace CyberSecurityChatbotP2
                 "Do not download files from unknown websites.",
                 "Keep your software updated to prevent malware attacks."
             };
+
+            responses["2fa"] = new List<string>()
+            {
+                "Two-factor authentication adds an extra layer of security to your account.",
+                "2FA helps protect your accounts even if someone steals your password.",
+                "Use 2FA on important accounts such as banking, email, and social media."
+            };
+
+            responses["two-factor authentication"] = responses["2fa"];
         }
 
         private void SendButton_Click(object sender, RoutedEventArgs e)
@@ -76,14 +84,27 @@ namespace CyberSecurityChatbotP2
             }
 
             ChatDisplay.AppendText("You: " + input + "\n\n");
-
             UserInput.Clear();
+
+            string lowerInput = input.ToLower();
+
+            if (lowerInput == "exit" || lowerInput == "quit" || lowerInput == "bye")
+            {
+                BotMessage("Thank you for using the Cybersecurity Awareness Chatbot.");
+                BotMessage("Goodbye and stay safe online!");
+
+                Application.Current.Shutdown();
+                return;
+            }
 
             if (string.IsNullOrEmpty(userName))
             {
                 userName = input;
+
                 BotMessage("Nice to meet you, " + userName + "!");
-                BotMessage("You can ask me about passwords, phishing, scams, privacy, or malware.");
+                BotMessage("You can ask me about passwords, phishing, scams, privacy, malware, or 2FA.");
+                BotMessage("Type 'exit', 'quit', or 'bye' to close the chatbot.");
+
                 return;
             }
 
@@ -91,47 +112,73 @@ namespace CyberSecurityChatbotP2
 
             bool found = false;
 
+            if (lowerInput.Contains("how are you"))
+            {
+                BotMessage("I am doing well, " + userName + ". Thank you for asking. I am ready to help you stay safe online.");
+                found = true;
+            }
+            else if (lowerInput.Contains("what can you do"))
+            {
+                BotMessage("I can answer questions about password safety, phishing, privacy, malware, scams, and two-factor authentication.");
+                found = true;
+            }
+            else if (lowerInput.Contains("thank you") || lowerInput.Contains("thanks"))
+            {
+                BotMessage("You are welcome, " + userName + "! Staying informed is one of the best ways to stay safe online.");
+                found = true;
+            }
+            else if (lowerInput.Contains("your name"))
+            {
+                BotMessage("I am the Cybersecurity Awareness Chatbot, your digital safety assistant.");
+                found = true;
+            }
+
             foreach (var item in responses)
             {
-                if (input.ToLower().Contains(item.Key))
+                if (lowerInput.Contains(item.Key))
                 {
-                    string response =
-                        item.Value[random.Next(item.Value.Count)];
+                    string response = item.Value[random.Next(item.Value.Count)];
 
                     BotMessage(response);
 
                     favouriteTopic = item.Key;
-
                     found = true;
                     break;
                 }
             }
 
-            if (input.ToLower().Contains("another")
-                || input.ToLower().Contains("more")
-                || input.ToLower().Contains("tell me more"))
+            if (lowerInput.Contains("another") ||
+                lowerInput.Contains("more") ||
+                lowerInput.Contains("tell me more") ||
+                lowerInput.Contains("explain more"))
             {
                 if (!string.IsNullOrEmpty(favouriteTopic))
                 {
                     string response =
-                        responses[favouriteTopic]
-                        [random.Next(responses[favouriteTopic].Count)];
+                        responses[favouriteTopic][random.Next(responses[favouriteTopic].Count)];
 
-                    BotMessage("Here is another tip about "
-                        + favouriteTopic + ":");
-
+                    BotMessage("Here is another tip about " + favouriteTopic + ":");
                     BotMessage(response);
 
                     found = true;
                 }
+                else
+                {
+                    BotMessage("Please ask about a cybersecurity topic first, then I can give you more information.");
+                    found = true;
+                }
             }
 
-            if (input.ToLower().Contains("my favourite topic"))
+            if (lowerInput.Contains("my favourite topic") ||
+                lowerInput.Contains("my favorite topic"))
             {
                 if (!string.IsNullOrEmpty(favouriteTopic))
                 {
-                    BotMessage("Your favourite cybersecurity topic seems to be "
-                        + favouriteTopic + ".");
+                    BotMessage("Your favourite cybersecurity topic seems to be " + favouriteTopic + ".");
+                }
+                else
+                {
+                    BotMessage("I have not saved a favourite topic for you yet.");
                 }
 
                 found = true;
@@ -145,22 +192,20 @@ namespace CyberSecurityChatbotP2
 
         private void HandleSentiment(string input)
         {
-            input = input.ToLower();
+            string lowerInput = input.ToLower();
 
-            if (input.Contains("worried")
-                || input.Contains("scared")
-                || input.Contains("nervous"))
+            if (lowerInput.Contains("worried") ||
+                lowerInput.Contains("scared") ||
+                lowerInput.Contains("nervous"))
             {
                 BotMessage("It is completely understandable to feel that way. Cybersecurity can feel overwhelming sometimes.");
             }
-
-            else if (input.Contains("curious"))
+            else if (lowerInput.Contains("curious"))
             {
                 BotMessage("Curiosity is great when learning about cybersecurity.");
             }
-
-            else if (input.Contains("frustrated")
-                || input.Contains("angry"))
+            else if (lowerInput.Contains("frustrated") ||
+                     lowerInput.Contains("angry"))
             {
                 BotMessage("I understand your frustration. Let me help you step by step.");
             }
@@ -176,9 +221,7 @@ namespace CyberSecurityChatbotP2
         {
             try
             {
-                SoundPlayer player =
-                    new SoundPlayer("greeting.wav");
-
+                SoundPlayer player = new SoundPlayer("greeting.wav");
                 player.Play();
             }
             catch
