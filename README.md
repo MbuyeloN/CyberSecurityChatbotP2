@@ -109,6 +109,16 @@ This helps ensure that the application remains stable and buildable throughout d
 
 ---
 
+## Video Demonstration
+
+YouTube Video Link:
+
+https://youtu.be/AxHjmMymM9g
+
+The video demonstrates the chatbot's graphical user interface, voice greeting, keyword recognition, memory recall, sentiment detection, timestamps, GitHub integration, and overall functionality.
+
+---
+
 ## Future Improvements (Part 3 Development)
 
 The following features are planned for the final version of the Cybersecurity Awareness Chatbot:
