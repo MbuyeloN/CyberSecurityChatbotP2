@@ -238,7 +238,7 @@ namespace CyberSecurityChatbotP2
         {
             try
             {
-                SoundPlayer player = new SoundPlayer("greeting.wav");
+                SoundPlayer player = new SoundPlayer("greeting.wav.wav");
                 player.Play();
             }
             catch
