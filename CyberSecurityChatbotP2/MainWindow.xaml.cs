@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Media;
 using System.Windows;
+using System.Windows.Input;
 
 namespace CyberSecurityChatbotP2
 {
@@ -83,7 +84,11 @@ namespace CyberSecurityChatbotP2
                 return;
             }
 
-            ChatDisplay.AppendText("You: " + input + "\n\n");
+            WelcomePanel.Visibility = Visibility.Collapsed;
+
+            string time = DateTime.Now.ToString("HH:mm");
+            ChatDisplay.AppendText("[" + time + "] You: " + input + "\n\n");
+
             UserInput.Clear();
 
             string lowerInput = input.ToLower();
@@ -211,9 +216,21 @@ namespace CyberSecurityChatbotP2
             }
         }
 
+        private void UserInput_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter)
+            {
+                SendButton_Click(sender, e);
+            }
+        }
+
         private void BotMessage(string message)
         {
-            ChatDisplay.AppendText("Bot: " + message + "\n\n");
+            WelcomePanel.Visibility = Visibility.Collapsed;
+
+            string time = DateTime.Now.ToString("HH:mm");
+            ChatDisplay.AppendText("[" + time + "] Bot: " + message + "\n\n");
+
             ChatDisplay.ScrollToEnd();
         }
 
@@ -226,7 +243,8 @@ namespace CyberSecurityChatbotP2
             }
             catch
             {
-                BotMessage("Voice greeting could not play.");
+                string time = DateTime.Now.ToString("HH:mm");
+                ChatDisplay.AppendText("[" + time + "] Bot: Voice greeting could not play.\n\n");
             }
         }
     }
