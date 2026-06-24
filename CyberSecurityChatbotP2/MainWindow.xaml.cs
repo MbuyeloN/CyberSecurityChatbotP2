@@ -238,17 +238,72 @@ namespace CyberSecurityChatbotP2
 
         private void AddTaskButton_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("Task added successfully.");
+            string title = TaskTitleInput.Text.Trim();
+            string description = TaskDescriptionInput.Text.Trim();
+            string reminder = TaskReminderInput.Text.Trim();
+
+            if (string.IsNullOrWhiteSpace(title))
+            {
+                MessageBox.Show("Please enter a task title.");
+                return;
+            }
+
+            string task = "[PENDING] " + title;
+
+            if (!string.IsNullOrWhiteSpace(description))
+            {
+                task += " | " + description;
+            }
+
+            if (!string.IsNullOrWhiteSpace(reminder))
+            {
+                task += " | Reminder: " + reminder;
+            }
+
+            tasks.Add(task);
+            TaskListBox.Items.Add(task);
+
+            BotMessage("Task added successfully.");
+
+            TaskTitleInput.Clear();
+            TaskDescriptionInput.Clear();
+            TaskReminderInput.Clear();
         }
 
         private void CompleteTaskButton_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("Task marked as completed.");
+            if (TaskListBox.SelectedItem == null)
+            {
+                MessageBox.Show("Please select a task to mark as complete.");
+                return;
+            }
+
+            int index = TaskListBox.SelectedIndex;
+
+            string selectedTask = TaskListBox.SelectedItem.ToString();
+
+            string completedTask = selectedTask.Replace("[PENDING]", "[COMPLETED]");
+
+            TaskListBox.Items[index] = completedTask;
+            tasks[index] = completedTask;
+
+            BotMessage("Task marked as completed.");
         }
 
         private void DeleteTaskButton_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("Task deleted.");
+            if (TaskListBox.SelectedItem == null)
+            {
+                MessageBox.Show("Please select a task to delete.");
+                return;
+            }
+
+            int index = TaskListBox.SelectedIndex;
+
+            TaskListBox.Items.RemoveAt(index);
+            tasks.RemoveAt(index);
+
+            BotMessage("Task deleted successfully.");
         }
 
         private void PlayGreeting()
