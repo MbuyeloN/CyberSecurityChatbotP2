@@ -16,6 +16,8 @@ namespace CyberSecurityChatbotP2
         string userName = "";
         string favouriteTopic = "";
 
+        private List<string> tasks = new List<string>();
+
         public MainWindow()
         {
             InitializeComponent();
@@ -234,6 +236,21 @@ namespace CyberSecurityChatbotP2
             ChatDisplay.ScrollToEnd();
         }
 
+        private void AddTaskButton_Click(object sender, RoutedEventArgs e)
+        {
+            MessageBox.Show("Task added successfully.");
+        }
+
+        private void CompleteTaskButton_Click(object sender, RoutedEventArgs e)
+        {
+            MessageBox.Show("Task marked as completed.");
+        }
+
+        private void DeleteTaskButton_Click(object sender, RoutedEventArgs e)
+        {
+            MessageBox.Show("Task deleted.");
+        }
+
         private void PlayGreeting()
         {
             try
@@ -249,4 +266,5 @@ namespace CyberSecurityChatbotP2
         }
     }
 }
+
 
