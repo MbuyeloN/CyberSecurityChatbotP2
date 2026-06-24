@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Media;
 using System.Windows;
 using System.Windows.Input;
+using MySql.Data.MySqlClient;
 
 namespace CyberSecurityChatbotP2
 {
@@ -13,10 +14,14 @@ namespace CyberSecurityChatbotP2
 
         Random random = new Random();
 
+        private string connectionString =
+            "server=localhost;database=cybersecuritychatbotdb;uid=root;pwd=M1998t1964!SQL;";
+
         string userName = "";
         string favouriteTopic = "";
 
         private List<string> tasks = new List<string>();
+        private List<int> taskIds = new List<int>();
         private List<string> activityLog = new List<string>();
 
         private bool quizActive = false;
@@ -42,6 +47,7 @@ namespace CyberSecurityChatbotP2
             InitializeComponent();
 
             LoadResponses();
+            LoadTasksFromDatabase();
             PlayGreeting();
 
             BotMessage("Hello! Welcome to the Cybersecurity Awareness Chatbot.");
@@ -118,7 +124,6 @@ namespace CyberSecurityChatbotP2
             {
                 BotMessage("Thank you for using the Cybersecurity Awareness Chatbot.");
                 BotMessage("Goodbye and stay safe online!");
-
                 Application.Current.Shutdown();
                 return;
             }
@@ -196,7 +201,6 @@ namespace CyberSecurityChatbotP2
                 if (lowerInput.Contains(item.Key))
                 {
                     string response = item.Value[random.Next(item.Value.Count)];
-
                     BotMessage(response);
 
                     favouriteTopic = item.Key;
@@ -245,6 +249,220 @@ namespace CyberSecurityChatbotP2
             if (!found)
             {
                 BotMessage("I am not sure I understand. Can you try rephrasing?");
+            }
+        }
+
+        private void LoadTasksFromDatabase()
+        {
+            try
+            {
+                TaskListBox.Items.Clear();
+                tasks.Clear();
+                taskIds.Clear();
+
+                using (MySqlConnection connection = new MySqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    string query = "SELECT TaskID, Title, Description, Reminder, IsCompleted FROM Tasks";
+
+                    using (MySqlCommand command = new MySqlCommand(query, connection))
+                    using (MySqlDataReader reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            int taskId = Convert.ToInt32(reader["TaskID"]);
+                            string title = reader["Title"].ToString();
+                            string description = reader["Description"].ToString();
+                            string reminder = reader["Reminder"].ToString();
+                            bool isCompleted = Convert.ToBoolean(reader["IsCompleted"]);
+
+                            string task = FormatTask(title, description, reminder, isCompleted);
+
+                            taskIds.Add(taskId);
+                            tasks.Add(task);
+                            TaskListBox.Items.Add(task);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Could not load tasks from database: " + ex.Message);
+            }
+        }
+
+        private string FormatTask(string title, string description, string reminder, bool isCompleted)
+        {
+            string status = isCompleted ? "[COMPLETED] " : "[PENDING] ";
+            string task = status + title;
+
+            if (!string.IsNullOrWhiteSpace(description))
+            {
+                task += " | " + description;
+            }
+
+            if (!string.IsNullOrWhiteSpace(reminder))
+            {
+                task += " | Reminder: " + reminder;
+            }
+
+            return task;
+        }
+
+        private int InsertTaskIntoDatabase(string title, string description, string reminder)
+        {
+            using (MySqlConnection connection = new MySqlConnection(connectionString))
+            {
+                connection.Open();
+
+                string query =
+                    "INSERT INTO Tasks (Title, Description, Reminder, IsCompleted) " +
+                    "VALUES (@Title, @Description, @Reminder, false); " +
+                    "SELECT LAST_INSERT_ID();";
+
+                using (MySqlCommand command = new MySqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@Title", title);
+                    command.Parameters.AddWithValue("@Description", description);
+                    command.Parameters.AddWithValue("@Reminder", reminder);
+
+                    return Convert.ToInt32(command.ExecuteScalar());
+                }
+            }
+        }
+
+        private void UpdateTaskCompletionInDatabase(int taskId)
+        {
+            using (MySqlConnection connection = new MySqlConnection(connectionString))
+            {
+                connection.Open();
+
+                string query = "UPDATE Tasks SET IsCompleted = true WHERE TaskID = @TaskID";
+
+                using (MySqlCommand command = new MySqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@TaskID", taskId);
+                    command.ExecuteNonQuery();
+                }
+            }
+        }
+
+        private void DeleteTaskFromDatabase(int taskId)
+        {
+            using (MySqlConnection connection = new MySqlConnection(connectionString))
+            {
+                connection.Open();
+
+                string query = "DELETE FROM Tasks WHERE TaskID = @TaskID";
+
+                using (MySqlCommand command = new MySqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@TaskID", taskId);
+                    command.ExecuteNonQuery();
+                }
+            }
+        }
+
+        private void AddTaskButton_Click(object sender, RoutedEventArgs e)
+        {
+            string title = TaskTitleInput.Text.Trim();
+            string description = TaskDescriptionInput.Text.Trim();
+            string reminder = TaskReminderInput.Text.Trim();
+
+            if (string.IsNullOrWhiteSpace(title))
+            {
+                MessageBox.Show("Please enter a task title.");
+                return;
+            }
+
+            try
+            {
+                int newTaskId = InsertTaskIntoDatabase(title, description, reminder);
+                string task = FormatTask(title, description, reminder, false);
+
+                taskIds.Add(newTaskId);
+                tasks.Add(task);
+                TaskListBox.Items.Add(task);
+
+                LogActivity("Task Added: " + title);
+
+                if (!string.IsNullOrWhiteSpace(reminder))
+                {
+                    BotMessage("Task added successfully and saved to the database. Reminder set for: " + reminder);
+                }
+                else
+                {
+                    BotMessage("Task added successfully and saved to the database. No reminder was set.");
+                }
+
+                TaskTitleInput.Clear();
+                TaskDescriptionInput.Clear();
+                TaskReminderInput.Clear();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Task could not be saved to the database: " + ex.Message);
+            }
+        }
+
+        private void CompleteTaskButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (TaskListBox.SelectedItem == null)
+            {
+                MessageBox.Show("Please select a task to mark as complete.");
+                return;
+            }
+
+            try
+            {
+                int index = TaskListBox.SelectedIndex;
+                int taskId = taskIds[index];
+
+                UpdateTaskCompletionInDatabase(taskId);
+
+                string selectedTask = TaskListBox.SelectedItem.ToString();
+                string completedTask = selectedTask.Replace("[PENDING]", "[COMPLETED]");
+
+                TaskListBox.Items[index] = completedTask;
+                tasks[index] = completedTask;
+
+                LogActivity("Task Completed: " + selectedTask);
+                BotMessage("Task marked as completed and updated in the database.");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Task could not be updated in the database: " + ex.Message);
+            }
+        }
+
+        private void DeleteTaskButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (TaskListBox.SelectedItem == null)
+            {
+                MessageBox.Show("Please select a task to delete.");
+                return;
+            }
+
+            try
+            {
+                int index = TaskListBox.SelectedIndex;
+                int taskId = taskIds[index];
+
+                string deletedTask = TaskListBox.SelectedItem.ToString();
+
+                DeleteTaskFromDatabase(taskId);
+
+                TaskListBox.Items.RemoveAt(index);
+                tasks.RemoveAt(index);
+                taskIds.RemoveAt(index);
+
+                LogActivity("Task Deleted: " + deletedTask);
+                BotMessage("Task deleted successfully from the database.");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Task could not be deleted from the database: " + ex.Message);
             }
         }
 
@@ -366,91 +584,6 @@ namespace CyberSecurityChatbotP2
         {
             string time = DateTime.Now.ToString("HH:mm");
             activityLog.Add("[" + time + "] " + activity);
-        }
-
-        private void AddTaskButton_Click(object sender, RoutedEventArgs e)
-        {
-            string title = TaskTitleInput.Text.Trim();
-            string description = TaskDescriptionInput.Text.Trim();
-            string reminder = TaskReminderInput.Text.Trim();
-
-            if (string.IsNullOrWhiteSpace(title))
-            {
-                MessageBox.Show("Please enter a task title.");
-                return;
-            }
-
-            string task = "[PENDING] " + title;
-
-            if (!string.IsNullOrWhiteSpace(description))
-            {
-                task += " | " + description;
-            }
-
-            if (!string.IsNullOrWhiteSpace(reminder))
-            {
-                task += " | Reminder: " + reminder;
-            }
-
-            tasks.Add(task);
-            TaskListBox.Items.Add(task);
-
-            LogActivity("Task Added: " + title);
-
-            if (!string.IsNullOrWhiteSpace(reminder))
-            {
-                BotMessage("Task added successfully. Reminder set for: " + reminder);
-            }
-            else
-            {
-                BotMessage("Task added successfully. No reminder was set.");
-            }
-
-            TaskTitleInput.Clear();
-            TaskDescriptionInput.Clear();
-            TaskReminderInput.Clear();
-        }
-
-        private void CompleteTaskButton_Click(object sender, RoutedEventArgs e)
-        {
-            if (TaskListBox.SelectedItem == null)
-            {
-                MessageBox.Show("Please select a task to mark as complete.");
-                return;
-            }
-
-            int index = TaskListBox.SelectedIndex;
-
-            string selectedTask = TaskListBox.SelectedItem.ToString();
-
-            string completedTask = selectedTask.Replace("[PENDING]", "[COMPLETED]");
-
-            TaskListBox.Items[index] = completedTask;
-            tasks[index] = completedTask;
-
-            LogActivity("Task Completed: " + selectedTask);
-
-            BotMessage("Task marked as completed.");
-        }
-
-        private void DeleteTaskButton_Click(object sender, RoutedEventArgs e)
-        {
-            if (TaskListBox.SelectedItem == null)
-            {
-                MessageBox.Show("Please select a task to delete.");
-                return;
-            }
-
-            int index = TaskListBox.SelectedIndex;
-
-            string deletedTask = TaskListBox.SelectedItem.ToString();
-
-            LogActivity("Task Deleted: " + deletedTask);
-
-            TaskListBox.Items.RemoveAt(index);
-            tasks.RemoveAt(index);
-
-            BotMessage("Task deleted successfully.");
         }
 
         private void PlayGreeting()
