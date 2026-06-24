@@ -17,6 +17,7 @@ namespace CyberSecurityChatbotP2
         string favouriteTopic = "";
 
         private List<string> tasks = new List<string>();
+        private List<string> activityLog = new List<string>();
 
         public MainWindow()
         {
@@ -139,6 +140,24 @@ namespace CyberSecurityChatbotP2
                 BotMessage("I am the Cybersecurity Awareness Chatbot, your digital safety assistant.");
                 found = true;
             }
+            else if (lowerInput == "show activity")
+            {
+                if (activityLog.Count == 0)
+                {
+                    BotMessage("No activities have been recorded yet.");
+                }
+                else
+                {
+                    BotMessage("Activity Log:");
+
+                    foreach (string activity in activityLog)
+                    {
+                        BotMessage(activity);
+                    }
+                }
+
+                found = true;
+            }
 
             foreach (var item in responses)
             {
@@ -236,6 +255,12 @@ namespace CyberSecurityChatbotP2
             ChatDisplay.ScrollToEnd();
         }
 
+        private void LogActivity(string activity)
+        {
+            string time = DateTime.Now.ToString("HH:mm");
+            activityLog.Add("[" + time + "] " + activity);
+        }
+
         private void AddTaskButton_Click(object sender, RoutedEventArgs e)
         {
             string title = TaskTitleInput.Text.Trim();
@@ -262,6 +287,8 @@ namespace CyberSecurityChatbotP2
 
             tasks.Add(task);
             TaskListBox.Items.Add(task);
+
+            LogActivity("Task Added: " + title);
 
             if (!string.IsNullOrWhiteSpace(reminder))
             {
@@ -294,6 +321,8 @@ namespace CyberSecurityChatbotP2
             TaskListBox.Items[index] = completedTask;
             tasks[index] = completedTask;
 
+            LogActivity("Task Completed: " + selectedTask);
+
             BotMessage("Task marked as completed.");
         }
 
@@ -306,6 +335,10 @@ namespace CyberSecurityChatbotP2
             }
 
             int index = TaskListBox.SelectedIndex;
+
+            string deletedTask = TaskListBox.SelectedItem.ToString();
+
+            LogActivity("Task Deleted: " + deletedTask);
 
             TaskListBox.Items.RemoveAt(index);
             tasks.RemoveAt(index);
@@ -328,5 +361,4 @@ namespace CyberSecurityChatbotP2
         }
     }
 }
-
 
