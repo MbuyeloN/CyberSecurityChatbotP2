@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Media;
 using System.Windows;
 using System.Windows.Input;
+using MySql.Data.MySqlClient;
 
 namespace CyberSecurityChatbotP2
 {
@@ -13,14 +14,40 @@ namespace CyberSecurityChatbotP2
 
         Random random = new Random();
 
+        private string connectionString =
+            "server=localhost;database=cybersecuritychatbotdb;uid=root;pwd=M1998t1964!SQL;";
+
         string userName = "";
         string favouriteTopic = "";
+
+        private List<string> tasks = new List<string>();
+        private List<int> taskIds = new List<int>();
+        private List<string> activityLog = new List<string>();
+
+        private bool quizActive = false;
+        private int currentQuestion = 0;
+        private int quizScore = 0;
+
+        private List<QuizQuestion> quizQuestions = new List<QuizQuestion>()
+        {
+            new QuizQuestion("What does 2FA stand for?", "Two-Factor Authentication", "Two-Fast Access", "Two-File Approval", "a"),
+            new QuizQuestion("Which one is an example of a strong password?", "123456", "Password123", "G7@kL!92zP", "c"),
+            new QuizQuestion("What is phishing?", "A type of online scam", "A computer update", "A strong password", "a"),
+            new QuizQuestion("Which website is usually more secure?", "http://example.com", "https://example.com", "www.example", "b"),
+            new QuizQuestion("What should you do with suspicious email links?", "Click them quickly", "Ignore or verify them first", "Forward them to everyone", "b"),
+            new QuizQuestion("What is malware?", "Helpful software", "Harmful software", "A password manager", "b"),
+            new QuizQuestion("Why should software be updated?", "To improve security", "To delete all files", "To make passwords public", "a"),
+            new QuizQuestion("Should you share your password with friends?", "Yes", "No", "Only sometimes", "b"),
+            new QuizQuestion("What does antivirus software help with?", "Detecting and blocking threats", "Creating weak passwords", "Sharing private information", "a"),
+            new QuizQuestion("What is a common sign of a scam?", "Urgency and pressure", "Clear verified information", "Secure official communication", "a")
+        };
 
         public MainWindow()
         {
             InitializeComponent();
 
             LoadResponses();
+            LoadTasksFromDatabase();
             PlayGreeting();
 
             BotMessage("Hello! Welcome to the Cybersecurity Awareness Chatbot.");
@@ -97,7 +124,6 @@ namespace CyberSecurityChatbotP2
             {
                 BotMessage("Thank you for using the Cybersecurity Awareness Chatbot.");
                 BotMessage("Goodbye and stay safe online!");
-
                 Application.Current.Shutdown();
                 return;
             }
@@ -108,8 +134,16 @@ namespace CyberSecurityChatbotP2
 
                 BotMessage("Nice to meet you, " + userName + "!");
                 BotMessage("You can ask me about passwords, phishing, scams, privacy, malware, or 2FA.");
+                BotMessage("Type 'start quiz' to begin the cybersecurity quiz.");
+                BotMessage("Type 'show activity' to view your activity log.");
                 BotMessage("Type 'exit', 'quit', or 'bye' to close the chatbot.");
 
+                return;
+            }
+
+            if (quizActive)
+            {
+                CheckQuizAnswer(lowerInput);
                 return;
             }
 
@@ -117,7 +151,12 @@ namespace CyberSecurityChatbotP2
 
             bool found = false;
 
-            if (lowerInput.Contains("how are you"))
+            if (lowerInput == "start quiz")
+            {
+                StartQuiz();
+                found = true;
+            }
+            else if (lowerInput.Contains("how are you"))
             {
                 BotMessage("I am doing well, " + userName + ". Thank you for asking. I am ready to help you stay safe online.");
                 found = true;
@@ -125,6 +164,7 @@ namespace CyberSecurityChatbotP2
             else if (lowerInput.Contains("what can you do"))
             {
                 BotMessage("I can answer questions about password safety, phishing, privacy, malware, scams, and two-factor authentication.");
+                BotMessage("I can also help you manage cybersecurity tasks, show your activity log, and run a cybersecurity quiz.");
                 found = true;
             }
             else if (lowerInput.Contains("thank you") || lowerInput.Contains("thanks"))
@@ -137,13 +177,30 @@ namespace CyberSecurityChatbotP2
                 BotMessage("I am the Cybersecurity Awareness Chatbot, your digital safety assistant.");
                 found = true;
             }
+            else if (lowerInput == "show activity")
+            {
+                if (activityLog.Count == 0)
+                {
+                    BotMessage("No activities have been recorded yet.");
+                }
+                else
+                {
+                    BotMessage("Activity Log:");
+
+                    foreach (string activity in activityLog)
+                    {
+                        BotMessage(activity);
+                    }
+                }
+
+                found = true;
+            }
 
             foreach (var item in responses)
             {
                 if (lowerInput.Contains(item.Key))
                 {
                     string response = item.Value[random.Next(item.Value.Count)];
-
                     BotMessage(response);
 
                     favouriteTopic = item.Key;
@@ -195,6 +252,295 @@ namespace CyberSecurityChatbotP2
             }
         }
 
+        private void LoadTasksFromDatabase()
+        {
+            try
+            {
+                TaskListBox.Items.Clear();
+                tasks.Clear();
+                taskIds.Clear();
+
+                using (MySqlConnection connection = new MySqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    string query = "SELECT TaskID, Title, Description, Reminder, IsCompleted FROM Tasks";
+
+                    using (MySqlCommand command = new MySqlCommand(query, connection))
+                    using (MySqlDataReader reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            int taskId = Convert.ToInt32(reader["TaskID"]);
+                            string title = reader["Title"].ToString();
+                            string description = reader["Description"].ToString();
+                            string reminder = reader["Reminder"].ToString();
+                            bool isCompleted = Convert.ToBoolean(reader["IsCompleted"]);
+
+                            string task = FormatTask(title, description, reminder, isCompleted);
+
+                            taskIds.Add(taskId);
+                            tasks.Add(task);
+                            TaskListBox.Items.Add(task);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Could not load tasks from database: " + ex.Message);
+            }
+        }
+
+        private string FormatTask(string title, string description, string reminder, bool isCompleted)
+        {
+            string status = isCompleted ? "[COMPLETED] " : "[PENDING] ";
+            string task = status + title;
+
+            if (!string.IsNullOrWhiteSpace(description))
+            {
+                task += " | " + description;
+            }
+
+            if (!string.IsNullOrWhiteSpace(reminder))
+            {
+                task += " | Reminder: " + reminder;
+            }
+
+            return task;
+        }
+
+        private int InsertTaskIntoDatabase(string title, string description, string reminder)
+        {
+            using (MySqlConnection connection = new MySqlConnection(connectionString))
+            {
+                connection.Open();
+
+                string query =
+                    "INSERT INTO Tasks (Title, Description, Reminder, IsCompleted) " +
+                    "VALUES (@Title, @Description, @Reminder, false); " +
+                    "SELECT LAST_INSERT_ID();";
+
+                using (MySqlCommand command = new MySqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@Title", title);
+                    command.Parameters.AddWithValue("@Description", description);
+                    command.Parameters.AddWithValue("@Reminder", reminder);
+
+                    return Convert.ToInt32(command.ExecuteScalar());
+                }
+            }
+        }
+
+        private void UpdateTaskCompletionInDatabase(int taskId)
+        {
+            using (MySqlConnection connection = new MySqlConnection(connectionString))
+            {
+                connection.Open();
+
+                string query = "UPDATE Tasks SET IsCompleted = true WHERE TaskID = @TaskID";
+
+                using (MySqlCommand command = new MySqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@TaskID", taskId);
+                    command.ExecuteNonQuery();
+                }
+            }
+        }
+
+        private void DeleteTaskFromDatabase(int taskId)
+        {
+            using (MySqlConnection connection = new MySqlConnection(connectionString))
+            {
+                connection.Open();
+
+                string query = "DELETE FROM Tasks WHERE TaskID = @TaskID";
+
+                using (MySqlCommand command = new MySqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@TaskID", taskId);
+                    command.ExecuteNonQuery();
+                }
+            }
+        }
+
+        private void AddTaskButton_Click(object sender, RoutedEventArgs e)
+        {
+            string title = TaskTitleInput.Text.Trim();
+            string description = TaskDescriptionInput.Text.Trim();
+            string reminder = TaskReminderInput.Text.Trim();
+
+            if (string.IsNullOrWhiteSpace(title))
+            {
+                MessageBox.Show("Please enter a task title.");
+                return;
+            }
+
+            try
+            {
+                int newTaskId = InsertTaskIntoDatabase(title, description, reminder);
+                string task = FormatTask(title, description, reminder, false);
+
+                taskIds.Add(newTaskId);
+                tasks.Add(task);
+                TaskListBox.Items.Add(task);
+
+                LogActivity("Task Added: " + title);
+
+                if (!string.IsNullOrWhiteSpace(reminder))
+                {
+                    BotMessage("Task added successfully and saved to the database. Reminder set for: " + reminder);
+                }
+                else
+                {
+                    BotMessage("Task added successfully and saved to the database. No reminder was set.");
+                }
+
+                TaskTitleInput.Clear();
+                TaskDescriptionInput.Clear();
+                TaskReminderInput.Clear();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Task could not be saved to the database: " + ex.Message);
+            }
+        }
+
+        private void CompleteTaskButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (TaskListBox.SelectedItem == null)
+            {
+                MessageBox.Show("Please select a task to mark as complete.");
+                return;
+            }
+
+            try
+            {
+                int index = TaskListBox.SelectedIndex;
+                int taskId = taskIds[index];
+
+                UpdateTaskCompletionInDatabase(taskId);
+
+                string selectedTask = TaskListBox.SelectedItem.ToString();
+                string completedTask = selectedTask.Replace("[PENDING]", "[COMPLETED]");
+
+                TaskListBox.Items[index] = completedTask;
+                tasks[index] = completedTask;
+
+                LogActivity("Task Completed: " + selectedTask);
+                BotMessage("Task marked as completed and updated in the database.");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Task could not be updated in the database: " + ex.Message);
+            }
+        }
+
+        private void DeleteTaskButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (TaskListBox.SelectedItem == null)
+            {
+                MessageBox.Show("Please select a task to delete.");
+                return;
+            }
+
+            try
+            {
+                int index = TaskListBox.SelectedIndex;
+                int taskId = taskIds[index];
+
+                string deletedTask = TaskListBox.SelectedItem.ToString();
+
+                DeleteTaskFromDatabase(taskId);
+
+                TaskListBox.Items.RemoveAt(index);
+                tasks.RemoveAt(index);
+                taskIds.RemoveAt(index);
+
+                LogActivity("Task Deleted: " + deletedTask);
+                BotMessage("Task deleted successfully from the database.");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Task could not be deleted from the database: " + ex.Message);
+            }
+        }
+
+        private void StartQuiz()
+        {
+            quizActive = true;
+            currentQuestion = 0;
+            quizScore = 0;
+
+            LogActivity("Cybersecurity Quiz Started");
+
+            BotMessage("Cybersecurity Quiz started!");
+            BotMessage("Please answer using a, b, or c.");
+
+            DisplayQuizQuestion();
+        }
+
+        private void DisplayQuizQuestion()
+        {
+            QuizQuestion question = quizQuestions[currentQuestion];
+
+            BotMessage("Question " + (currentQuestion + 1) + "/" + quizQuestions.Count + ":");
+            BotMessage(question.Question);
+            BotMessage("a) " + question.OptionA);
+            BotMessage("b) " + question.OptionB);
+            BotMessage("c) " + question.OptionC);
+        }
+
+        private void CheckQuizAnswer(string answer)
+        {
+            if (answer != "a" && answer != "b" && answer != "c")
+            {
+                BotMessage("Please answer using only a, b, or c.");
+                return;
+            }
+
+            QuizQuestion question = quizQuestions[currentQuestion];
+
+            if (answer == question.CorrectAnswer)
+            {
+                quizScore++;
+                BotMessage("Correct!");
+            }
+            else
+            {
+                BotMessage("Incorrect. The correct answer was: " + question.CorrectAnswer);
+            }
+
+            currentQuestion++;
+
+            if (currentQuestion < quizQuestions.Count)
+            {
+                DisplayQuizQuestion();
+            }
+            else
+            {
+                quizActive = false;
+
+                BotMessage("Quiz complete!");
+                BotMessage("Your final score is " + quizScore + "/" + quizQuestions.Count + ".");
+
+                if (quizScore >= 8)
+                {
+                    BotMessage("Excellent work, " + userName + "! You have strong cybersecurity awareness.");
+                }
+                else if (quizScore >= 5)
+                {
+                    BotMessage("Good effort, " + userName + ". Keep learning and improving your cybersecurity knowledge.");
+                }
+                else
+                {
+                    BotMessage("You may need more cybersecurity practice, " + userName + ". Keep using the chatbot to learn more.");
+                }
+
+                LogActivity("Cybersecurity Quiz Completed with score " + quizScore + "/" + quizQuestions.Count);
+            }
+        }
+
         private void HandleSentiment(string input)
         {
             string lowerInput = input.ToLower();
@@ -234,6 +580,12 @@ namespace CyberSecurityChatbotP2
             ChatDisplay.ScrollToEnd();
         }
 
+        private void LogActivity(string activity)
+        {
+            string time = DateTime.Now.ToString("HH:mm");
+            activityLog.Add("[" + time + "] " + activity);
+        }
+
         private void PlayGreeting()
         {
             try
@@ -246,6 +598,24 @@ namespace CyberSecurityChatbotP2
                 string time = DateTime.Now.ToString("HH:mm");
                 ChatDisplay.AppendText("[" + time + "] Bot: Voice greeting could not play.\n\n");
             }
+        }
+    }
+
+    public class QuizQuestion
+    {
+        public string Question { get; set; }
+        public string OptionA { get; set; }
+        public string OptionB { get; set; }
+        public string OptionC { get; set; }
+        public string CorrectAnswer { get; set; }
+
+        public QuizQuestion(string question, string optionA, string optionB, string optionC, string correctAnswer)
+        {
+            Question = question;
+            OptionA = optionA;
+            OptionB = optionB;
+            OptionC = optionC;
+            CorrectAnswer = correctAnswer;
         }
     }
 }
