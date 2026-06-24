@@ -19,6 +19,24 @@ namespace CyberSecurityChatbotP2
         private List<string> tasks = new List<string>();
         private List<string> activityLog = new List<string>();
 
+        private bool quizActive = false;
+        private int currentQuestion = 0;
+        private int quizScore = 0;
+
+        private List<QuizQuestion> quizQuestions = new List<QuizQuestion>()
+        {
+            new QuizQuestion("What does 2FA stand for?", "Two-Factor Authentication", "Two-Fast Access", "Two-File Approval", "a"),
+            new QuizQuestion("Which one is an example of a strong password?", "123456", "Password123", "G7@kL!92zP", "c"),
+            new QuizQuestion("What is phishing?", "A type of online scam", "A computer update", "A strong password", "a"),
+            new QuizQuestion("Which website is usually more secure?", "http://example.com", "https://example.com", "www.example", "b"),
+            new QuizQuestion("What should you do with suspicious email links?", "Click them quickly", "Ignore or verify them first", "Forward them to everyone", "b"),
+            new QuizQuestion("What is malware?", "Helpful software", "Harmful software", "A password manager", "b"),
+            new QuizQuestion("Why should software be updated?", "To improve security", "To delete all files", "To make passwords public", "a"),
+            new QuizQuestion("Should you share your password with friends?", "Yes", "No", "Only sometimes", "b"),
+            new QuizQuestion("What does antivirus software help with?", "Detecting and blocking threats", "Creating weak passwords", "Sharing private information", "a"),
+            new QuizQuestion("What is a common sign of a scam?", "Urgency and pressure", "Clear verified information", "Secure official communication", "a")
+        };
+
         public MainWindow()
         {
             InitializeComponent();
@@ -111,8 +129,16 @@ namespace CyberSecurityChatbotP2
 
                 BotMessage("Nice to meet you, " + userName + "!");
                 BotMessage("You can ask me about passwords, phishing, scams, privacy, malware, or 2FA.");
+                BotMessage("Type 'start quiz' to begin the cybersecurity quiz.");
+                BotMessage("Type 'show activity' to view your activity log.");
                 BotMessage("Type 'exit', 'quit', or 'bye' to close the chatbot.");
 
+                return;
+            }
+
+            if (quizActive)
+            {
+                CheckQuizAnswer(lowerInput);
                 return;
             }
 
@@ -120,7 +146,12 @@ namespace CyberSecurityChatbotP2
 
             bool found = false;
 
-            if (lowerInput.Contains("how are you"))
+            if (lowerInput == "start quiz")
+            {
+                StartQuiz();
+                found = true;
+            }
+            else if (lowerInput.Contains("how are you"))
             {
                 BotMessage("I am doing well, " + userName + ". Thank you for asking. I am ready to help you stay safe online.");
                 found = true;
@@ -128,6 +159,7 @@ namespace CyberSecurityChatbotP2
             else if (lowerInput.Contains("what can you do"))
             {
                 BotMessage("I can answer questions about password safety, phishing, privacy, malware, scams, and two-factor authentication.");
+                BotMessage("I can also help you manage cybersecurity tasks, show your activity log, and run a cybersecurity quiz.");
                 found = true;
             }
             else if (lowerInput.Contains("thank you") || lowerInput.Contains("thanks"))
@@ -213,6 +245,81 @@ namespace CyberSecurityChatbotP2
             if (!found)
             {
                 BotMessage("I am not sure I understand. Can you try rephrasing?");
+            }
+        }
+
+        private void StartQuiz()
+        {
+            quizActive = true;
+            currentQuestion = 0;
+            quizScore = 0;
+
+            LogActivity("Cybersecurity Quiz Started");
+
+            BotMessage("Cybersecurity Quiz started!");
+            BotMessage("Please answer using a, b, or c.");
+
+            DisplayQuizQuestion();
+        }
+
+        private void DisplayQuizQuestion()
+        {
+            QuizQuestion question = quizQuestions[currentQuestion];
+
+            BotMessage("Question " + (currentQuestion + 1) + "/" + quizQuestions.Count + ":");
+            BotMessage(question.Question);
+            BotMessage("a) " + question.OptionA);
+            BotMessage("b) " + question.OptionB);
+            BotMessage("c) " + question.OptionC);
+        }
+
+        private void CheckQuizAnswer(string answer)
+        {
+            if (answer != "a" && answer != "b" && answer != "c")
+            {
+                BotMessage("Please answer using only a, b, or c.");
+                return;
+            }
+
+            QuizQuestion question = quizQuestions[currentQuestion];
+
+            if (answer == question.CorrectAnswer)
+            {
+                quizScore++;
+                BotMessage("Correct!");
+            }
+            else
+            {
+                BotMessage("Incorrect. The correct answer was: " + question.CorrectAnswer);
+            }
+
+            currentQuestion++;
+
+            if (currentQuestion < quizQuestions.Count)
+            {
+                DisplayQuizQuestion();
+            }
+            else
+            {
+                quizActive = false;
+
+                BotMessage("Quiz complete!");
+                BotMessage("Your final score is " + quizScore + "/" + quizQuestions.Count + ".");
+
+                if (quizScore >= 8)
+                {
+                    BotMessage("Excellent work, " + userName + "! You have strong cybersecurity awareness.");
+                }
+                else if (quizScore >= 5)
+                {
+                    BotMessage("Good effort, " + userName + ". Keep learning and improving your cybersecurity knowledge.");
+                }
+                else
+                {
+                    BotMessage("You may need more cybersecurity practice, " + userName + ". Keep using the chatbot to learn more.");
+                }
+
+                LogActivity("Cybersecurity Quiz Completed with score " + quizScore + "/" + quizQuestions.Count);
             }
         }
 
@@ -358,6 +465,24 @@ namespace CyberSecurityChatbotP2
                 string time = DateTime.Now.ToString("HH:mm");
                 ChatDisplay.AppendText("[" + time + "] Bot: Voice greeting could not play.\n\n");
             }
+        }
+    }
+
+    public class QuizQuestion
+    {
+        public string Question { get; set; }
+        public string OptionA { get; set; }
+        public string OptionB { get; set; }
+        public string OptionC { get; set; }
+        public string CorrectAnswer { get; set; }
+
+        public QuizQuestion(string question, string optionA, string optionB, string optionC, string correctAnswer)
+        {
+            Question = question;
+            OptionA = optionA;
+            OptionB = optionB;
+            OptionC = optionC;
+            CorrectAnswer = correctAnswer;
         }
     }
 }
