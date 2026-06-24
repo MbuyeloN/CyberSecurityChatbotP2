@@ -263,7 +263,14 @@ namespace CyberSecurityChatbotP2
             tasks.Add(task);
             TaskListBox.Items.Add(task);
 
-            BotMessage("Task added successfully.");
+            if (!string.IsNullOrWhiteSpace(reminder))
+            {
+                BotMessage("Task added successfully. Reminder set for: " + reminder);
+            }
+            else
+            {
+                BotMessage("Task added successfully. No reminder was set.");
+            }
 
             TaskTitleInput.Clear();
             TaskDescriptionInput.Clear();
