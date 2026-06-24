@@ -1,10 +1,10 @@
-# Cybersecurity Awareness Chatbot (Part 2)
+# Cybersecurity Awareness Chatbot
 
 ## Overview
 
-The Cybersecurity Awareness Chatbot is a WPF desktop application developed in C# to educate users about important cybersecurity concepts and online safety practices. The chatbot provides an interactive user experience through a graphical user interface (GUI), personalised responses, voice greetings, memory recall, sentiment detection, and cybersecurity awareness tips.
+The Cybersecurity Awareness Chatbot is a WPF desktop application developed in C# to educate users about important cybersecurity concepts and online safety practices. The chatbot provides an interactive user experience through a graphical user interface (GUI), personalised responses, voice greetings, memory recall, sentiment detection, cybersecurity awareness tips, task management, quiz functionality, database integration, and activity logging.
 
-The purpose of this project is to help users understand common cybersecurity threats and learn how to protect themselves while using digital technologies.
+The purpose of this project is to help users understand common cybersecurity threats, improve cybersecurity awareness, and learn how to protect themselves while using digital technologies.
 
 ---
 
@@ -16,6 +16,7 @@ The purpose of this project is to help users understand common cybersecurity thr
 * Interactive chat window
 * Modern design with responsive controls
 * Welcome screen with cybersecurity branding
+* Integrated chatbot, task assistant, quiz, and activity log functionality
 
 ### Voice Greeting
 
@@ -30,7 +31,7 @@ The purpose of this project is to help users understand common cybersecurity thr
 
 ### Cybersecurity Topics
 
-The chatbot can provide information about:
+The chatbot provides information about:
 
 * Password Safety
 * Phishing Attacks
@@ -39,13 +40,21 @@ The chatbot can provide information about:
 * Privacy Protection
 * Two-Factor Authentication (2FA)
 
-### Keyword Recognition
+### Keyword Recognition and NLP Simulation
 
 The chatbot recognises keywords entered by users and provides relevant cybersecurity advice.
 
+The chatbot can understand and respond to:
+
+* Cybersecurity-related questions
+* Quiz requests
+* Task management commands
+* Reminder interactions
+* Activity log requests
+
 ### Random Responses
 
-Multiple responses are stored for each topic. The chatbot randomly selects a response to create a more natural conversational experience.
+Multiple responses are stored for each topic. The chatbot randomly selects responses to create a more natural and engaging conversation.
 
 ### Memory and Recall
 
@@ -62,7 +71,7 @@ The chatbot identifies emotional keywords such as:
 * Frustrated
 * Angry
 
-and responds appropriately.
+and responds appropriately with supportive cybersecurity guidance.
 
 ### Error Handling
 
@@ -80,7 +89,83 @@ The chatbot provides a personalised farewell message before closing.
 
 ### Message Timestamps
 
-All chat messages include timestamps to improve conversation tracking and usability.
+All chatbot messages include timestamps to improve conversation tracking and usability.
+
+---
+
+## Part 3 Features
+
+### Task Assistant with Reminders
+
+The chatbot includes a Task Assistant that allows users to create and manage cybersecurity-related tasks.
+
+Users can:
+
+* Add new tasks
+* Include task descriptions
+* Set reminders or timeframes
+* Mark tasks as completed
+* Delete tasks
+* View saved tasks
+
+### MySQL Database Integration
+
+The application uses a MySQL database to provide persistent task storage.
+
+Database features include:
+
+* Saving tasks to a MySQL database
+* Loading tasks when the application starts
+* Updating completed tasks
+* Deleting tasks from the database
+* Synchronising task information between the GUI and database
+
+### Cybersecurity Quiz Mini-Game
+
+The chatbot includes an interactive cybersecurity quiz that helps users test their cybersecurity knowledge.
+
+Features include:
+
+* Multiple cybersecurity questions
+* Score tracking
+* Immediate feedback
+* Educational cybersecurity content
+* Interactive learning experience
+
+### Activity Log System
+
+The chatbot records important user actions and system activities.
+
+Examples include:
+
+* Task creation
+* Task completion
+* Task deletion
+* Reminder activity
+* Quiz interactions
+
+Users can view recent activity by typing:
+
+show activity
+
+### Cohesive Integration
+
+Parts 1, 2, and 3 have been successfully integrated into a single WPF application.
+
+The final application combines:
+
+* Cybersecurity chatbot
+* Voice greeting
+* NLP simulation
+* Memory recall
+* Sentiment detection
+* Task Assistant
+* Reminder system
+* MySQL database integration
+* Cybersecurity quiz
+* Activity log
+
+This creates a complete cybersecurity awareness assistant that both educates users and assists them with cybersecurity-related activities.
 
 ---
 
@@ -90,6 +175,9 @@ All chat messages include timestamps to improve conversation tracking and usabil
 * Windows Presentation Foundation (WPF)
 * .NET 8
 * Visual Studio 2022
+* MySQL Server
+* MySQL Workbench
+* MySql.Data NuGet Package
 * GitHub
 * GitHub Actions
 
@@ -97,7 +185,29 @@ All chat messages include timestamps to improve conversation tracking and usabil
 
 ## GitHub Version Control
 
-This project uses GitHub for version control. Multiple commits were made throughout development to track progress and maintain project history.
+This project uses GitHub for version control.
+
+Development was tracked through multiple meaningful commits, allowing progress to be monitored throughout the project lifecycle.
+
+Features were implemented incrementally and documented through commit history and release versions.
+
+---
+
+## GitHub Releases and Tags
+
+The project includes multiple version tags and releases to demonstrate development progress.
+
+Versions include:
+
+* v1.0
+* v1.1
+* v1.2
+* v2.1
+* v2.2
+* v2.3
+* v2.4
+
+Each release documents significant improvements and feature additions throughout development.
 
 ---
 
@@ -105,62 +215,31 @@ This project uses GitHub for version control. Multiple commits were made through
 
 GitHub Actions was implemented to automatically build the project whenever changes are pushed to the repository.
 
-This helps ensure that the application remains stable and buildable throughout development.
+This ensures that the project remains stable, buildable, and properly tested throughout development.
 
 ---
 
-## Future Improvements (Part 3 Development)
+## Video Demonstration
 
-The following features are planned for the final version of the Cybersecurity Awareness Chatbot:
+YouTube Video Link:
 
-### Task Assistant with Reminders
+[Paste your YouTube video link here]
 
-* Allow users to create cybersecurity-related tasks.
-* Add reminders for important security actions.
-* Mark tasks as completed.
-* View and manage saved tasks.
+---
 
-### Database Integration (MySQL)
+## Future Improvements
 
-* Store cybersecurity tasks in a MySQL database.
-* Retrieve saved tasks when the application starts.
-* Update and delete tasks directly from the GUI.
-* Improve data persistence and organisation.
+Possible future enhancements include:
 
-### Cybersecurity Quiz Mini-Game
-
-* Introduce an interactive cybersecurity quiz.
-* Include more than 10 questions covering cybersecurity concepts.
-* Support multiple-choice and true/false questions.
-* Track and display the user's final score.
-
-### Enhanced NLP Simulation
-
-* Improve the chatbot's ability to understand different ways users phrase questions.
-* Recognise commands such as task creation, reminders, and quiz requests.
-* Reduce unrecognised inputs through improved keyword matching.
-
-### Activity Log System
-
-* Record important chatbot actions.
-* Track reminders, tasks, and quiz activity.
-* Allow users to view recent chatbot actions through activity log commands.
-* Display recent activities with timestamps.
-
-### Improved User Experience
-
-* Expand the graphical user interface with additional interactive controls.
-* Enhance navigation between chatbot features.
-* Improve responsiveness and usability of the application.
+* More advanced NLP capabilities
+* Additional cybersecurity learning modules
+* User authentication and profiles
+* Enhanced reporting and analytics
+* Cloud-based database integration
+* Expanded cybersecurity quiz question bank
 
 ---
 
 ## Author
 
-Mbuyelo Nkuna
-
----
-
-## Acknowledgements
-
-This project was developed as part of a Programming course and incorporates cybersecurity awareness concepts to promote safe online behaviour.
+**Mbuyelo Nkuna**
