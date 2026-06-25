@@ -223,7 +223,7 @@ This ensures that the project remains stable, buildable, and properly tested thr
 
 YouTube Video Link:
 
-[Paste your YouTube video link here]
+https://youtu.be/T7DonzW_mIQ
 
 ---
 
